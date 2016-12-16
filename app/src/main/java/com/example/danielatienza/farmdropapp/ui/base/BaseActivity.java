@@ -1,4 +1,4 @@
-package com.example.danielatienza.farmdropapp.ui.common;
+package com.example.danielatienza.farmdropapp.ui.base;
 
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
