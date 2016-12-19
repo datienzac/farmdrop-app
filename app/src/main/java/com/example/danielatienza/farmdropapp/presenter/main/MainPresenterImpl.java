@@ -1,101 +1,132 @@
 package com.example.danielatienza.farmdropapp.presenter.main;
 
-import android.support.v7.widget.GridLayoutManager;
-
 import com.example.danielatienza.farmdropapp.database.ProducersRepository;
+import com.example.danielatienza.farmdropapp.ui.base.BasePresenter;
+import com.example.danielatienza.farmdropapp.ui.base.MvpView;
 import com.example.danielatienza.farmdropapp.ui.main.MainView;
 import com.example.danielatienza.farmdropapp.utils.listener.OnDataRequestListener;
 import com.example.danielatienza.farmdropapp.utils.manager.ProducersManager;
 
 import java.util.List;
 
+import greendao.ProducerData;
+
 /**
  * Created by danielatienza on 14/12/2016.
  */
-public class MainPresenterImpl implements MainPresenter, OnDataRequestListener {
+public class MainPresenterImpl extends BasePresenter implements MainPresenter, OnDataRequestListener {
 
-        private MainView mMainView;
-        private ProducersRepository mProducersRepository;
-        private ProducersManager mProducersManager;
+    private MainView mMainView;
+    private ProducersRepository mProducersRepository;
+    private ProducersManager mProducersManager;
+    private boolean searching;
 
-        private OnMainRecyclerViewListener mOnMainRecyclerViewListener;
+    public MainPresenterImpl(MainView mainView, ProducersRepository producersRepository,
+                             ProducersManager producersManager) {
 
-        public MainPresenterImpl(MainView mainView, ProducersRepository producersRepository,
-                                 ProducersManager producersManager) {
+        this.mMainView = mainView;
+        this.mProducersRepository = producersRepository;
+        this.mProducersManager = producersManager;
+    }
 
-            this.mMainView = mainView;
-            this.mProducersRepository = producersRepository;
-            this.mProducersManager = producersManager;
-        }
+    @Override
+    public void attachView(MvpView mvpView) {
+        super.attachView(mvpView);
+    }
 
-        @Override
-        public void defineViewsBehaviour() {
+    @Override
+    public void detachView() {
+        super.detachView();
+    }
 
-            /* MAKES THE FIRST CALL */
-            loadNextPage();
-        }
 
-        @Override
-        public void loadNextPage() {
-            if((mImageAdapter.getItemCount()) < (mImageRepository.countImageDataByType(mType)) &&
-                    (mImageRepository.countImageDataByType(mType) > ImageRepository.SELECT_LIMIT)) {
+    @Override
+    public void loadProducers() {
+        /* Makes the first call */
+        loadNextPage();
+    }
 
-                loadDataFromDB(mImageRepository.getPagedImageData(mImageAdapter.getItemCount(), mType));
+    @Override
+    public void loadNextPage() {
+        int itemsCount = mMainView.getItemsCount();
+        if (!searching) {
+            if((itemsCount < mProducersRepository.countProducerData()) &&
+                    (mProducersRepository.countProducerData() > ProducersRepository.SELECT_LIMIT)) {
 
+                loadDataFromDB(mProducersRepository.getPagedProducerData(itemsCount));
             } else {
 
                 mMainView.showProgress();
-                mShutterStockManager.loadImageData(this, mType);
+                mProducersManager.loadProducersData(this);
 
             }
-        }
 
-        @Override
-        public void onDataError() {
-            mMainView.hideProgress();
-            mMainView.onError();
-        }
-
-        @Override
-        public void requestData() {
-            loadNextPage();
-        }
-
-        @Override
-        public void onCompleted() {
-            loadDataFromDB(mImageRepository.getPagedImageData(mImageAdapter.getItemCount(), mType));
-        }
-
-
-        /*
-         RETRIEVE UPDATED DATA FROM DATABASE
-         */
-        private void loadDataFromDB(List<ImageData> imageDataList) {
-            mImageAdapter.addDataSet(imageDataList);
-            mImageAdapter.notifyDataSetChanged();
-            mMainView.hideProgress();
-        }
-
-        /*
-         CLEANS THE ADAPTER TO RELOAD DATA
-         */
-        private void resetAdapter() {
-            mOnMainRecyclerViewListener.reset();
-            mImageAdapter.reset();
-        }
-
-        public class OnMainRecyclerViewListener extends OnRecyclerViewThresholdListener {
-
-            public OnMainRecyclerViewListener(GridLayoutManager mGridLayoutManager) {
-                super(mGridLayoutManager);
-            }
-
-            @Override
-            public void onVisibleThreshold() {
-                if(!isReset()) {
-                    loadNextPage();
-                }
-            }
         }
     }
+
+    /*
+     * Retrieve updated data from db
+     */
+    private void loadDataFromDB(List<ProducerData> producerDataList) {
+        mMainView.showProducers(producerDataList);
+        mMainView.hideProgress();
+    }
+
+    @Override
+    public void onRefresh() {
+        /* TODO: Swipe to Refresh Behaviour*/
+
+//                .setOnRefreshListener(
+//                        new SwipeRefreshLayout
+//                                .OnRefreshListener() {
+//                            @Override
+//                            public void onRefresh() {
+//                                mProducersRepository.clearProducerData();
+//                                mProducersManager.resetPageSearch();
+//                                loadNextPage();
+//                                resetAdapter();
+//                            }
+//                        });
+    }
+
+    @Override
+    public boolean onSearch(String newText) {
+        if (newText.length() > 0) {
+            mMainView.resetAdapter();
+            mMainView.showProducers(mProducersRepository.getProducerDataByName(newText));
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void onSearchClosed() {
+        searching = false;
+        mMainView.resetAdapter();
+        mProducersManager.resetPageSearch();
+        loadNextPage();
+    }
+
+    @Override
+    public void onSearchShown() {
+        searching = true;
+    }
+
+    @Override
+    public void onDataError() {
+        mMainView.hideProgress();
+        mMainView.onError();
+    }
+
+    @Override
+    public void onCompleted() {
+        loadDataFromDB(mProducersRepository.getPagedProducerData(mMainView.getItemsCount()));
+    }
+
+    @Override
+    public void requestData() {
+        loadNextPage();
+    }
+
 }
+

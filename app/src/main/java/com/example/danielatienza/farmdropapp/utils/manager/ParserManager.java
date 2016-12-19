@@ -16,6 +16,7 @@ public class ParserManager {
 
         producerData.setProducerId(producer.getId());
         producerData.setProducerName(producer.getName());
+        producerData.setProducerLocation(producer.getLocation());
         producerData.setProducerDescription(producer.getDescription());
         producerData.setProducerImageURL(producer.getImages().get(0).getPath());
 

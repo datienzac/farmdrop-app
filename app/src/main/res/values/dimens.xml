@@ -2,4 +2,27 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+
+
+    <!-- Item Producer Style -->
+    <dimen name="item_producer_card_elevation">8dp</dimen>
+    <dimen name="item_producer_icon_height">100dp</dimen>
+    <dimen name="item_producer_icon_width">100dp</dimen>
+    <dimen name="item_producer_icon_margin_right">10dp</dimen>
+    <dimen name="item_producer_card_margin">6dp</dimen>
+    <dimen name="item_producer_title_margin_top">5dp</dimen>
+
+
+    <!-- Detail View Style -->
+    <dimen name="details_image_height">300dp</dimen>
+    <dimen name="details_text_margin">10dp</dimen>
+
+
+    <!-- Text View Style -->
+    <dimen name="app_large_text_size">18sp</dimen>
+    <dimen name="app_medium_text_size">16sp</dimen>
+    <dimen name="app_small_text_size">14sp</dimen>
+    <dimen name="card_margin_right">10dp</dimen>
+
+
 </resources>

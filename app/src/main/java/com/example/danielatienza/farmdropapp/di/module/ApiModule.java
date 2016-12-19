@@ -8,7 +8,10 @@ import android.util.Log;
 import com.crashlytics.android.Crashlytics;
 import com.example.danielatienza.farmdropapp.App;
 import com.example.danielatienza.farmdropapp.BuildConfig;
+import com.example.danielatienza.farmdropapp.database.ProducersRepository;
 import com.example.danielatienza.farmdropapp.network.ProducersInterface;
+import com.example.danielatienza.farmdropapp.utils.manager.ParserManager;
+import com.example.danielatienza.farmdropapp.utils.manager.ProducersManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Singleton;
 
+import dagger.Module;
 import dagger.Provides;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -32,84 +36,19 @@ import static android.net.sip.SipErrorCode.TIME_OUT;
 /**
  * Created by danielatienza on 14/12/2016.
  */
-
+@Module
 public class ApiModule {
 
-    private static final String UTF_8 = "UTF-8";
-
     private static final String PREFIX = "https://";
-    private static final String URL = "api.shutterstock.com/";
-    private static final String VERSION = "v2/";
-    private static final String BASE_URL = PREFIX.concat(URL).concat(VERSION);
+    private static final String URL = "fd-v5-api-release.herokuapp.com/2/";
+    private static final String BASE_URL = PREFIX.concat(URL);
+
 
     @Singleton
     @Provides
-    Pair<String, String> provideCredentials(App app) {
-        String username = "";
-        String password = "";
-
-        Properties properties = new Properties();
-        try {
-            InputStream inputStream = app.getAssets().open("api.properties");
-            properties.load(inputStream);
-
-            username = new String(
-                    Base64.decode(properties.getProperty("username").getBytes(UTF_8),
-                            Base64.DEFAULT), UTF_8);
-            password = new String(
-                    Base64.decode(properties.getProperty("password").getBytes(UTF_8),
-                            Base64.DEFAULT), UTF_8);
-        } catch (IOException e) {
-            Crashlytics.log(e.getMessage());
-        }
-
-        return new Pair<>(username, password);
-    }
-
-    @Singleton
-    @Provides
-    OkHttpClient provideOkHttpClient(final Pair<String, String> credentials) {
+    OkHttpClient provideOkHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
-
         OkHttpClient client = builder.connectTimeout(0, TimeUnit.MILLISECONDS).build();
-
-        client.interceptors().add(new Interceptor() {
-            @Override
-            public Response intercept(Chain chain) throws IOException {
-                String basic = "Basic " +
-                        Base64
-                                .encodeToString((credentials.first)
-                                        .concat(":")
-                                        .concat(credentials.second)
-                                        .getBytes(), Base64.NO_WRAP);
-
-                Request original = chain.request();
-
-                Request request = original.newBuilder()
-                        .header("Authorization", basic)
-                        .header("Accept", "application/json")
-                        .method(original.method(), original.body())
-                        .build();
-
-                /* RETRY CALL FOR 3 TIMES */
-
-                Response response = chain.proceed(request);
-                int tryCount = 0;
-                while (!response.isSuccessful() && tryCount < 3) {
-                    tryCount++;
-                    response = chain.proceed(request);
-                }
-
-                if (BuildConfig.DEBUG) {
-                    String bodyString = response.body().string();
-                    Log.d("api", String.format("Sending request %s with headers %s", original.url(), original.headers()));
-                    Log.d("api", String.format("Got response HTTP %s %s \n\n with body %s \n\n with headers %s ", response.code(), response.message(), bodyString, response.headers()));
-                    response = response.newBuilder().body(ResponseBody.create(response.body().contentType(), bodyString)).build();
-                }
-
-                return response;
-            }
-        });
         return client;
     }
 
@@ -133,15 +72,13 @@ public class ApiModule {
 
     @Singleton
     @Provides
-    public ProducersManager provideShutterStockManager(
+    public ProducersManager provideProducersManager(
             ProducersInterface producersInterface,
             ParserManager parserManager,
-            ImageRepository imageRepository,
-            CategoryRepository categoryRepository) {
-        return new ShutterStockManager(shutterStockInterface,
+            ProducersRepository producersRepository) {
+        return new ProducersManager(producersInterface,
                 parserManager,
-                imageRepository,
-                categoryRepository);
+                producersRepository);
     }
 
     @Singleton

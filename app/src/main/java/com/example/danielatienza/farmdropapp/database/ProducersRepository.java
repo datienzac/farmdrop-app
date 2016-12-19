@@ -1,7 +1,6 @@
 package com.example.danielatienza.farmdropapp.database;
 
 import java.util.List;
-
 import greendao.DaoSession;
 import greendao.ProducerData;
 import greendao.ProducerDataDao;
@@ -11,7 +10,7 @@ import greendao.ProducerDataDao;
  */
 
 public class ProducersRepository {
-    public static final int SELECT_LIMIT = 20;
+    public static final int SELECT_LIMIT = 10;
 
     private DaoSession mDaoSession;
 
@@ -31,7 +30,7 @@ public class ProducersRepository {
         mDaoSession.getProducerDataDao().insertOrReplaceInTx(ProducerData);
     }
 
-    public List<ProducerData> getProducerDataByName(long producerName) {
+    public List<ProducerData> getProducerDataByName(String producerName) {
         return mDaoSession.getProducerDataDao()
                 .queryBuilder().where(ProducerDataDao.Properties.ProducerName.like("%" + producerName + "%")).list();
     }
@@ -41,11 +40,7 @@ public class ProducersRepository {
                 .queryBuilder().where(ProducerDataDao.Properties.ProducerId.eq(producerId)).unique();
     }
 
-    public List<ProducerData> getPagedProducerData(int offset, int type) {
-        if(type == ProducerData.TYPE_ALL_ID) {
-            return mDaoSession.getProducerDataDao()
-                    .queryBuilder().limit(SELECT_LIMIT).offset(offset).list();
-        }
+    public List<ProducerData> getPagedProducerData(int offset) {
         return mDaoSession.getProducerDataDao()
                 .queryBuilder()
                 .limit(SELECT_LIMIT).offset(offset).list();

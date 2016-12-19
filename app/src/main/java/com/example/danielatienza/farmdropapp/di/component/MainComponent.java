@@ -4,6 +4,7 @@ import com.example.danielatienza.farmdropapp.di.module.MainModule;
 import com.example.danielatienza.farmdropapp.di.scope.Activity;
 import com.example.danielatienza.farmdropapp.presenter.main.MainPresenter;
 import com.example.danielatienza.farmdropapp.ui.main.MainActivity;
+import com.example.danielatienza.farmdropapp.ui.main.ProducersAdapter;
 
 import dagger.Component;
 

@@ -18,28 +18,9 @@ android {
         versionName '0.1.0'
     }
 
-    signingConfigs {
-        // You must set up an environment var before release signing
-        // Run: export APP_KEY={password}
-        // TODO Add your release keystore in /keystore folder
-        release {
-            storeFile file('keystore/release.keystore')
-            keyAlias 'alias'
-            storePassword "$System.env.APP_KEY"
-            keyPassword "$System.env.APP_KEY"
-        }
-
-        debug {
-            storeFile file('keystore/debug.keystore')
-            keyAlias 'androiddebugkey'
-            storePassword 'android'
-            keyPassword 'android'
-        }
-    }
-
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            //signingConfig signingConfigs.release
 
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -116,6 +97,10 @@ dependencies {
     compile 'io.reactivex:rxjava:1.1.6'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.7@aar') {
         transitive = true;
+    }
+
+    compile('com.miguelcatalan:materialsearchview:1.4.0') {
+        exclude group: 'com.android.support', module: 'appcompat-v7'
     }
 
     compile 'com.jakewharton.timber:timber:4.1.2'

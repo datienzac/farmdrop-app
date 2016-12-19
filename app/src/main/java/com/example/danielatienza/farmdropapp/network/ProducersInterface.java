@@ -15,7 +15,7 @@ import rx.Observable;
 
 public interface ProducersInterface {
 
-    String PRODUCERS_LIST = "fd-v5-api-release.herokuapp.com/2/producers";
+    String PRODUCERS_LIST = "producers";
     String PRODUCER = "PRODUCERS_LIST" + "/{id}";
     String PARAMETER_PAGE = "page";
     String PARAMETER_PER_PAGE_LIMIT = "per_page_limit";

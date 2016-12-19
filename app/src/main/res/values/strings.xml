@@ -5,4 +5,9 @@
         <string name="dialog_action_ok">OK</string>
         <string name="dialog_action_cancel">Cancel</string>
         <string name="dialog_error_title">Sorry</string>
+
+        <string name="empty_producers">There aren\'t any producers</string>
+        <string name="error_loading_producers">There was a problem loading the producers</string>
+        <string name="connection_error_message">Sorry, it seems that you\'re not online</string>
+        <string name="error_loading_producer_details">There was a problem loading the producer details</string>
 </resources>

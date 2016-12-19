@@ -1,6 +1,10 @@
 package com.example.danielatienza.farmdropapp.di.module;
 
+import com.example.danielatienza.farmdropapp.database.ProducersRepository;
 import com.example.danielatienza.farmdropapp.presenter.details.DetailsPresenter;
+import com.example.danielatienza.farmdropapp.presenter.details.DetailsPresenterImpl;
+import com.example.danielatienza.farmdropapp.ui.details.DetailsView;
+import com.example.danielatienza.farmdropapp.utils.manager.ProducersManager;
 
 import dagger.Module;
 import dagger.Provides;
@@ -23,10 +27,10 @@ public class DetailsModule {
 
     @Provides
     public DetailsPresenter provideMainPresenter(DetailsView detailsView,
-                                                 ImageRepository imageRepository,
-                                                 ShutterStockManager shutterStockManager) {
+                                                 ProducersRepository producersRepository,
+                                                 ProducersManager producersManager) {
         return new DetailsPresenterImpl(detailsView,
-                imageRepository,
-                shutterStockManager);
+                producersRepository,
+                producersManager);
     }
 }

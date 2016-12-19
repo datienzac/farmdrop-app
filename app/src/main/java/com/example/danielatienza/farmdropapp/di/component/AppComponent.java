@@ -6,7 +6,9 @@ import com.example.danielatienza.farmdropapp.di.module.ApiModule;
 import com.example.danielatienza.farmdropapp.di.module.AppModule;
 import com.example.danielatienza.farmdropapp.di.module.DatabaseModule;
 import com.example.danielatienza.farmdropapp.di.module.ProducersRepositoryModule;
+import com.example.danielatienza.farmdropapp.di.module.TransitionModule;
 import com.example.danielatienza.farmdropapp.network.ProducersInterface;
+import com.example.danielatienza.farmdropapp.utils.manager.CallManager;
 import com.example.danielatienza.farmdropapp.utils.manager.ParserManager;
 import com.example.danielatienza.farmdropapp.utils.manager.ProducersManager;
 
@@ -23,6 +25,7 @@ import retrofit2.Retrofit;
 @Component(modules = {
         AppModule.class,
         ApiModule.class,
+        TransitionModule.class,
         DatabaseModule.class,
         ProducersRepositoryModule.class
 })
@@ -31,7 +34,7 @@ public interface AppComponent {
     void inject(App app);
 
     App provideApp();
-
+    CallManager provideCallManager();
     Retrofit provideRetrofit();
     ProducersInterface provideProducersInterface();
     ProducersManager provideProducerskManager();

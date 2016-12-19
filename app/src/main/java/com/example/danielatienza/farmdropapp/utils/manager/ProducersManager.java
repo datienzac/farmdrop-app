@@ -30,10 +30,6 @@ public class ProducersManager {
     private static final long INITIAL_PAGE = 1;
     private static final int TOTAL_RETRIES = 3;
 
-    /*
-     CREATED A DIFFERENT INDEX PAGE FOR ALL OBJECTS BECAUSE IT COULD NOT BE RELATED TO THE SIZE OF
-     THE TABLE, BECAUSE OTHER TYPES COULD LOAD OBJECTS
-     */
     private long mCurrentPage = INITIAL_PAGE;
 
     private ProducersInterface mProduersInterface;
@@ -49,40 +45,40 @@ public class ProducersManager {
     }
 
     /*
-     IMAGE SEARCH SECTION
+     * Producers Search Section
      */
-    public void loadProducersData(final OnDataRequestListener onDataRequestListener, int type) {
+    public void loadProducersData(final OnDataRequestListener onDataRequestListener) {
 
         /*
-         PARAMETERS USED TO LOAD THE PRODUCERS FROM FARMDROP API
-         PAGE: CURRENT PAGE VARIABLE
-         PARAMETER_PER_PAGE_LIMIT: NUMBER OF ITEMS PER PAGE LIMIT
+         Parameters used to load the producers from Farmdrop Api
+         PAGE: current page available
+         PARAMETER_PER_PAGE_LIMIT: Number of items per page limit
          */
         Map<String, String> parameters = new HashMap<>();
 
         parameters.put(ProducersInterface.PARAMETER_PAGE, String.valueOf(mCurrentPage++));
         parameters.put(ProducersInterface.PARAMETER_PER_PAGE_LIMIT, "10");
 
-        /* REQUESTS THE IMAGE'S DATA */
+        /* REQUESTS THE PRODUCER'S DATA */
         mProduersInterface
                 .producersList(parameters)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                /* SEPARATES THE IMAGES LIST FROM THE RESPONSE */
+                /* Separates the Producers list from the response */
                 .flatMap(new Func1<Response, Observable<Producer>>() {
                     @Override
                     public Observable<Producer> call(Response responseParser) {
                         return Observable.from(responseParser.getProducers());
                     }
                 })
-                /* TRANSFORMS THE DATA INTO AN PRODUCER DATA OBSERVABLE */
+                /* Transforms the data into a producer data oversbable */
                 .flatMap(new Func1<Producer, Observable<ProducerData>>() {
                     @Override
                     public Observable<ProducerData> call(Producer data) {
                         return Observable.just(mParserManager.parseProducers(data));
                     }
                 })
-                /* DEFINE RETRY (3 TIMES) */
+                /* Define retry (3 Times) */
                 .retry(new Func2<Integer, Throwable, Boolean>() {
                     @Override
                     public Boolean call(Integer attempts, Throwable throwable) {
@@ -90,13 +86,12 @@ public class ProducersManager {
                     }
                 })
                 /*
-                 TRANSFORMS THE DATA INTO A LIST TO RECEIVE THE ANSWER JUST WHEN THE ENTIRE LIST
-                 IS LOADED
+                 Trans forms the data into a list to receive the answer just when the entire list is loaded
                  */
                 .toList()
-                /* DEFINES A REQUEST TIMEOUT */
+                /* Defines a request timeout */
                 .timeout(CONNECTION_TIMEOUT, TimeUnit.SECONDS)
-                /* SENDS THE DATA TO THE MAIN PRESENTER */
+                /* Sends the data to the main presenter */
                 .subscribe(new Observer<List<ProducerData>>() {
 
                     private boolean recall = false;
@@ -110,7 +105,7 @@ public class ProducersManager {
 
                             onDataRequestListener.onCompleted();
                         }
-                    }
+                     }
 
                     @Override
                     public void onError(Throwable e) {
@@ -119,20 +114,25 @@ public class ProducersManager {
                     }
 
                     @Override
-                    public void onNext(List<ProducerData> producerDataSet) {
+                    public void onNext(List<ProducerData> producerDataList) {
+                        /* Persist data on database to request after completed */
+                        mProducersRepository.insertOrReplaceInTx(producerDataList);
+
+
                         long previousTotal = mProducersRepository.countProducerData();
-                        /* PERSIST DATA ON DATABASE TO REQUEST AFTER COMPLETED */
-                        mProducersRepository.insertOrReplaceInTx(producerDataSet);
+                        /* Persist data on database to request after completed */
+                        mProducersRepository.insertOrReplaceInTx(producerDataList);
                         long currentTotal = mProducersRepository.countProducerData();
 
                         /*
-                         CHECK IF WAS ADDED NEW RECORDS
-                         BECAUSE IT'S POSSIBLE LOAD AN ALREADY RECORDED PAGE CONSIDERING THE FILTERS
-                         IN THAT CASE MAKES ANOTHER SEARCH
+                         Check if was added new records
+                         Because it's possible load an already recorded page considering the filters
+                         in that case makes another search
                         */
                         if (previousTotal == currentTotal) {
                             recall = true;
                         }
+
                     }
                 });
 
@@ -143,22 +143,5 @@ public class ProducersManager {
         mCurrentPage = INITIAL_PAGE;
     }
 
-//    /*
-//     THREAD CREATED TO SAVE THE IMAGE'S CATEGORIES INTO THE DATABASE
-//     */
-//    public class CategoryPersistence implements Runnable {
-//
-//        private Data mData;
-//
-//        public CategoryPersistence(Data data) {
-//            this.mData = data;
-//        }
-//
-//        @Override
-//        public void run() {
-//            mCategoryRepository.deleteCategoryDataForImageId(mData.getId());
-//            mCategoryRepository.insertOrReplaceInTx(mParserManager.parseCategories(mData));
-//        }
-//    }
 
 }

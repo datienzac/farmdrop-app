@@ -1,6 +1,8 @@
 package com.example.danielatienza.farmdropapp.di.module;
 
+import com.example.danielatienza.farmdropapp.database.ProducersRepository;
 import com.example.danielatienza.farmdropapp.presenter.main.MainPresenter;
+import com.example.danielatienza.farmdropapp.presenter.main.MainPresenterImpl;
 import com.example.danielatienza.farmdropapp.ui.main.MainView;
 import com.example.danielatienza.farmdropapp.utils.manager.ProducersManager;
 
@@ -25,8 +27,10 @@ public class MainModule {
 
     @Provides
     public MainPresenter provideMainPresenter(MainView mainView,
+                                              ProducersRepository producersRepository,
                                               ProducersManager producersManager) {
         return new MainPresenterImpl(mainView,
+                producersRepository,
                 producersManager);
     }
 }

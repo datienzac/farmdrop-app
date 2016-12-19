@@ -2,27 +2,45 @@ package com.example.danielatienza.farmdropapp.ui.details;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.danielatienza.farmdropapp.R;
 import com.example.danielatienza.farmdropapp.di.component.AppComponent;
+import com.example.danielatienza.farmdropapp.di.component.DaggerDetailsComponent;
 import com.example.danielatienza.farmdropapp.di.module.DetailsModule;
 import com.example.danielatienza.farmdropapp.presenter.details.DetailsPresenter;
-import com.example.danielatienza.farmdropapp.ui.common.BaseActivity;
+import com.example.danielatienza.farmdropapp.ui.base.BaseActivity;
+import com.example.danielatienza.farmdropapp.utils.DialogFactory;
+import com.example.danielatienza.farmdropapp.utils.manager.CallManager;
 
 import javax.inject.Inject;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import greendao.ProducerData;
 
 /**
  * Created by danielatienza on 14/12/2016.
  */
 public class DetailsActivity extends BaseActivity implements DetailsView {
 
-    private ActivityDetailsBinding mBinding;
-    private ProducerData mImageData;
+    private ProducerData mProducerData;
 
-    @Inject
-    DetailsPresenter mDetailsPresenter;
+    @Inject DetailsPresenter mDetailsPresenter;
+
+    @BindView(R.id.toolbar) Toolbar mToolBar;
+    @BindView(R.id.image_view) ImageView mImage;
+    @BindView(R.id.text_name) TextView mName;
+    @BindView(R.id.text_location) TextView mLocation;
+    @BindView(R.id.text_description) TextView mDescription;
 
     @Override
     protected int layoutToInflate() {
@@ -31,9 +49,13 @@ public class DetailsActivity extends BaseActivity implements DetailsView {
 
     @Override
     protected void doOnCreated(AppComponent appComponent, Bundle saveInstanceState) {
-        mBinding = (ActivityDetailsBinding) getDataBinding();
 
-        /* DRAW OVER STATUS BAR */
+        ButterKnife.bind(this);
+
+        long producerId = getIntent().getLongExtra(CallManager.PRODUCER_ID, -1);
+
+
+        /* Draw Over Status Bar*/
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().getDecorView()
@@ -42,21 +64,14 @@ public class DetailsActivity extends BaseActivity implements DetailsView {
             getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
         }
 
-        /* DEFINES TOOLBAR BACK BUTTON */
+        /* Defines Toolbar and backbutton */
 
-        setSupportActionBar(mBinding.toolbar);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_back);
+        setSupportActionBar(mToolBar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        long imageId = getIntent().getLongExtra(CallManager.IMAGE_ID, -1);
-
-        /* CREATES THE LINK TO THE TRANSITION ANIMATION */
-
-        ViewCompat.setTransitionName(mBinding.ivViewImageCard, CallManager.IMAGE);
-        ViewCompat.setTransitionName(mBinding.viewImageInfo.rlViewImageDetails, CallManager.DETAILS);
-
-        /* INJECT DEPENDENCY (COMPONENT) */
+        /* Inject Dependency (Component) */
 
         DaggerDetailsComponent
                 .builder()
@@ -65,106 +80,46 @@ public class DetailsActivity extends BaseActivity implements DetailsView {
                 .build()
                 .inject(this);
 
-        mDetailsPresenter.defineViewsBehaviour(this, mBinding, imageId);
+        /* Creates the link to the transition animation */
+
+        ViewCompat.setTransitionName(mImage, CallManager.IMAGE);
+
+        mDetailsPresenter.attachView(this);
+        mDetailsPresenter.loadProducer(producerId);
     }
 
     @Override
     public void showProgress() {
-        mBinding.setLoading(true);
+        //mLoadingLayout.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void hideProgress() {
-        mBinding.setLoading(false);
+        //mLoadingLayout.setVisibility(View.INVISIBLE);
     }
 
-    @Override
-    public void changeStatusBarColor(int color) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(color);
-        }
-    }
 
     @Override
     public void onError() {
-        Toast.makeText(this, getString(R.string.connection_error_message), Toast.LENGTH_SHORT).show();
-        finish();
+        DialogFactory.createGenericErrorDialog(this, getString(R.string.error_loading_producer_details)).show();
+        //finish();
     }
 
     @Override
-    public void loadImageData(ImageData imageData) {
-        this.mImageData = imageData;
-        /* IMAGE */
+    public void showProducer(ProducerData producerData) {
+        this.mProducerData = producerData;
+       /* IMAGE */
         Glide.with(this)
-                .load(imageData.getImageURL())
-                .thumbnail(Glide.with(this).load(imageData.getImageURL()).centerCrop().dontAnimate())
+                .load(producerData.getProducerImageURL())
+                .thumbnail(Glide.with(this).load(producerData.getProducerImageURL()).centerCrop().dontAnimate())
                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .dontAnimate()
                 .centerCrop()
-                .into(mBinding.ivViewImageCard);
+                .into(mImage);
 
-        /* ID */
-        mBinding.viewImageInfo.tvImageId.setText(String.valueOf(imageData.getImageId()));
-
-        /* CATEGORIES */
-        String divider = "";
-        StringBuffer categoriesBuffer = new StringBuffer()
-                .append(getString(R.string.category_label))
-                .append(" ");
-        for(CategoryData categoryData : imageData.getCategoryDataList()) {
-            categoriesBuffer.append(divider).append(categoryData.getName());
-            divider = ", ";
-        }
-
-        mBinding.tvActivityDetailsCategories.setText(categoriesBuffer.toString());
-
-        mBinding.setImageData(imageData);
-        mBinding.viewImageInfo.setImageData(imageData);
+        mName.setText(producerData.getProducerName());
+        mLocation.setText(producerData.getProducerLocation());
+        mDescription.setText(producerData.getProducerDescription());
     }
 
-    @Override
-    public void loadContributorsData(String contributor) {
-        /* CONTRIBUTOR */
-        StringBuffer contributorBuffer = new StringBuffer()
-                .append(getString(R.string.contributor_label))
-                .append(" ").append(contributor);
-        mBinding.tvActivityDetailsContributor.setText(contributorBuffer.toString());
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_details_activity, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-            case R.id.action_share:
-                share();
-                return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    /* SHARE BUTTON ACTION */
-
-    public void share() {
-        if (mImageData != null) {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_TITLE, mImageData.getId());
-            String message = mImageData.getDescription() + "\n" +
-                    mImageData.getContributor() + "\n\n" + mImageData.getImageURL();
-            intent.putExtra(Intent.EXTRA_TEXT, message);
-
-            startActivity(Intent
-                    .createChooser(intent, getString(R.string.activity_details_intent_share)));
-        }
-    }
 }
